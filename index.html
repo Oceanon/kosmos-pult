@@ -27,6 +27,10 @@
   .proj h2 { font:500 18px/1.2 "New York", Georgia, serif; margin:0 0 10px; display:flex; justify-content:space-between; align-items:center; }
   .proj h2 small { font:12px/1 -apple-system, system-ui; color:var(--muted); }
   .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:6px 0 4px; }
+  .kpis div { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 6px; text-align:center; }
+  .kpis b { display:block; font:600 20px/1.1 "New York", Georgia, serif; } .kpis span { color:var(--muted); font-size:11px; }
+  .pst { display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:12.5px; margin:-4px 0 10px; }
   .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:9px 13px; font:500 13.5px/1 inherit; color:inherit; cursor:pointer; }
   a.chip { text-decoration:none; display:inline-block; }
   .chip:active { border-color:var(--gold); } .chip.gold { background:var(--gold-soft); border-color:#e6d6bb; }
@@ -75,13 +79,24 @@
     const projects = (qs.get('p') || 'palmira~Пальмира~db|mgt~МГТ~dw').split('|').map(x => x.split('~')).filter(x => x[0])
       .map(([slug, name, flags]) => ({ slug: clean(slug), name: name || slug, flags: flags || '' }));
     const icon = { palmira: '🌴', mgt: '⚗️', 'deal-engine': '⚙️', 'flight-supply': '✈️' };
+    // Живые цифры из бота: s=a<одобрения>,slug:лиды:именные:отправлено,...,m<оплат на 100>
+    const S = { pend: '—', money: '—', proj: {} };
+    (qs.get('s') || '').split(',').forEach(x => {
+      if (/^a\d+$/.test(x)) S.pend = x.slice(1);
+      else if (/^m/.test(x)) S.money = x.slice(1);
+      else { const [sl, l, n, se] = x.split(':'); if (sl) S.proj[clean(sl)] = { l: +l || 0, n: +n || 0, s: +se || 0 }; }
+    });
+    const tot = Object.values(S.proj).reduce((a, p) => ({ l: a.l + p.l, n: a.n + p.n, s: a.s + p.s }), { l: 0, n: 0, s: 0 });
     const projHtml = projects.map(p => {
       const chips = [`<button class="chip gold" data-a="latest" data-p="${p.slug}">📄 Сводка</button>`];
       if (p.flags.includes('d')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-daily">▶️ Обновить</button>`);
       if (p.flags.includes('w')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-wave">✉️ Волна</button>`);
       if (p.flags.includes('s')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-signal-wave">📡 Волна по сигналам</button>`);
       if (p.flags.includes('b')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-b2b-wave">🎁 Праздничная волна</button>`);
-      return `<div class="proj"><h2>${icon[p.slug] || '◼︎'} ${esc(p.name)} <small>${esc(p.slug)}</small></h2><div class="chips">${chips.join('')}</div></div>`;
+      chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-lpr">🎯 Найти ЛПР</button>`);
+      const st = S.proj[p.slug];
+      const stat = st ? `<div class="pst"><span>👥 ${st.l} лидов</span><span>✅ ${st.n} именных</span><span>✉️ ${st.s} отправлено</span></div>` : '';
+      return `<div class="proj"><h2>${icon[p.slug] || '◼︎'} ${esc(p.name)} <small>${esc(p.slug)}</small></h2>${stat}<div class="chips">${chips.join('')}</div></div>`;
     }).join('');
     const opts = projects.map(p => `<option value="${p.slug}">${esc(p.name)}</option>`).join('') + '<option value="flight-supply">Flight Supply</option><option value="other">Другое</option>';
     app.innerHTML = `
@@ -94,6 +109,12 @@
       <div class="tabs"><button data-tab="today" class="on">Сегодня</button><button data-tab="proj">Проекты</button><button data-tab="mail">Рассылки</button><button data-tab="money">Деньги</button></div>
 
       <section class="pane on" id="today">
+        <div class="kpis">
+          <div><b>${S.pend}</b><span>ждут ✅</span></div>
+          <div><b>${tot.n}</b><span>именных ЛПР</span></div>
+          <div><b>${tot.s}</b><span>отправлено</span></div>
+          <div><b>${S.money}</b><span>оплат/100</span></div>
+        </div>
         <div class="label">Главное</div>
         <div class="grid">
           <button class="tile ok" data-a="pending"><span class="e">⏸</span><span class="t">Ждут одобрения</span><span class="d">волны и кейсы с кнопками</span></button>
