@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Deal Engine</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0b0b0b;--card:#151515;--line:#262626;--ink:#ececec;--mut:#8e8e8e;--ok:#22c55e;--gold:#c9a86a;--bad:#ef6b5b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;padding:18px 16px 40px}
+h1{font:700 26px/1.15 -apple-system,"SF Pro Display",system-ui;margin:0}.sub{color:var(--mut);font-size:13px;margin:4px 0 16px}
+nav{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 14px;padding:0 16px}nav a{flex:none;color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}nav a.on{color:var(--ink);background:var(--card)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}.card h2{font:600 13px/1 inherit;color:var(--mut);margin:0 0 12px;text-transform:none}
+.big{font:700 30px/1.1 -apple-system,"SF Pro Display";margin:2px 0}.green{color:var(--ok)}.gold{color:var(--gold)}.red{color:var(--bad)}
+.f{margin:12px 0}.f label{display:flex;justify-content:space-between;color:var(--mut);font-size:13px}.f b{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;-webkit-appearance:none;height:30px;background:transparent}input[type=range]::-webkit-slider-runnable-track{height:28px;border-radius:14px;background:#1f1f1f}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:1px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0008}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.kpi div{background:#101010;border:1px solid var(--line);border-radius:14px;padding:12px}.kpi span{color:var(--mut);font-size:12px}.kpi b{display:block;font-size:20px;margin-top:2px}
+.bar{height:10px;background:#1f1f1f;border-radius:6px;overflow:hidden;margin:8px 0 4px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--ok))}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{background:#101010;border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:13px;font:600 14px inherit;text-align:left;cursor:pointer}.btn:active{border-color:var(--gold)}
+.note{color:var(--mut);font-size:12px;margin-top:8px}.funnel div{display:flex;align-items:center;gap:10px;margin:6px 0}.funnel i{height:22px;background:#262626;border-radius:6px;display:block}.funnel span{font-size:13px;color:var(--mut);white-space:nowrap}
+</style></head><body>
+<h1>⚙️ Deal Engine</h1><div class="sub">Продукт · деньги · воронка — считается на лету</div>
+<nav id="nav"></nav>
+
+<div class="card"><h2>💸 Финансовый симулятор</h2>
+<div class="big" id="clients">0 клиентов</div>
+<div class="f"><label>Пилот · <span id="pP"></span> ₽<b id="nPv"></b></label><input type="range" id="nP" min="0" max="20" value="3"></div>
+<div class="f"><label>Рост · <span id="pG"></span> ₽/мес<b id="nGv"></b></label><input type="range" id="nG" min="0" max="40" value="8"></div>
+<div class="f"><label>Результат · <span id="pR"></span> ₽/мес + % от сделки<b id="nRv"></b></label><input type="range" id="nR" min="0" max="20" value="2"></div>
+<div class="f"><label>Маржинальный вклад<b id="mv"></b></label><input type="range" id="m" min="30" max="95" value="75"></div>
+<div class="f"><label>Постоянные расходы в месяц<b id="fv"></b></label><input type="range" id="fx" min="0" max="2000000" step="50000" value="150000"></div>
+<div class="f"><label>Курс USD (предп.)<b id="rv"></b></label><input type="range" id="rate" min="70" max="130" value="95"></div>
+<div class="kpi"><div><span>MRR</span><b id="mrr"></b></div><div><span>ARR</span><b id="arr"></b></div>
+<div><span>Результат в месяц</span><b id="op" class="green"></b></div><div><span>Личный доход в год</span><b id="usd" class="gold"></b></div></div>
+<div class="bar"><i id="goal"></i></div><div class="note" id="goaltxt"></div>
+<div class="note">Цены пакетов — стартовые предположения из спецификации. MRR × вклад − постоянные расходы; без налогов.</div></div>
+
+<div class="card"><h2>📬 Воронка: письма → деньги</h2>
+<div class="f"><label>Писем в месяц<b id="ev"></b></label><input type="range" id="e" min="300" max="20000" step="100" value="4500"></div>
+<div class="f"><label>Ответов<b id="rpv"></b></label><input type="range" id="rp" min="1" max="15" step="0.5" value="5"></div>
+<div class="f"><label>Из них позитивных<b id="psv"></b></label><input type="range" id="ps" min="10" max="60" value="30"></div>
+<div class="f"><label>Встреча из позитивного<b id="mtv"></b></label><input type="range" id="mt" min="10" max="80" value="40"></div>
+<div class="f"><label>Оплата из встречи<b id="clv"></b></label><input type="range" id="cl" min="5" max="50" value="20"></div>
+<div class="f"><label>Средний чек сделки клиента<b id="chv"></b></label><input type="range" id="ch" min="20000" max="2000000" step="10000" value="300000"></div>
+<div class="funnel" id="fun"></div>
+<div class="kpi"><div><span>Оплат на 100 писем</span><b id="p100" class="gold"></b></div><div><span>Выручка клиента / мес</span><b id="rev" class="green"></b></div></div></div>
+
+<div class="card"><h2>📮 Ёмкость ящиков</h2>
+<div class="f"><label>Ящиков<b id="bxv"></b></label><input type="range" id="bx" min="1" max="60" value="14"></div>
+<div class="f"><label>Писем на ящик в день<b id="pbv"></b></label><input type="range" id="pb" min="10" max="60" value="35"></div>
+<div class="kpi"><div><span>В день</span><b id="cd"></b></div><div><span>В месяц (21 р. д.)</span><b id="cm"></b></div></div>
+<div class="note">Coldy «Стандарт» даёт 4 500 писем/мес, «Про» — 40 000: смотри, во что упираешься.</div></div>
+
+<div class="card"><h2>⚡ Действия</h2><div class="btns">
+<button class="btn" data-a="pending">⏸ Ждут одобрения</button><button class="btn" data-a="run" data-p="signal-radar">📡 Радар</button>
+<button class="btn" data-a="run" data-p="revenue-weekly">💸 Деньги на 100</button><button class="btn" data-a="run" data-p="case-weekly">🏆 Кейс недели</button>
+</div></div>
+<script>
+const tg=window.Telegram?Telegram.WebApp:null;if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0b0b0b');tg.setBackgroundColor('#0b0b0b')}catch(e){}}
+const $=id=>document.getElementById(id),v=id=>+$(id).value,rub=x=>Math.abs(x)>=1e6?(x/1e6).toFixed(2)+' млн ₽':Math.round(x/1e3)+' тыс ₽',n=x=>Math.round(x).toLocaleString('ru');
+const PRICE={P:75000,G:100000,R:60000};$('pP').textContent=n(PRICE.P);$('pG').textContent=n(PRICE.G);$('pR').textContent=n(PRICE.R);
+const pages=[['index.html','🏠 Пульт'],['de.html','⚙️ Deal Engine'],['palmira.html','🌴 Пальмира'],['life.html','🧭 Life OS']];
+$('nav').innerHTML=pages.map(([h,t])=>`<a href="${h}${location.search.includes('p=')&&h==='index.html'?location.search:''}${location.hash}" class="${location.pathname.endsWith(h)?'on':''}">${t}</a>`).join('');
+const save=()=>{try{localStorage.setItem('de-sim',JSON.stringify([...document.querySelectorAll('input')].map(i=>[i.id,i.value])))}catch(e){}};
+try{(JSON.parse(localStorage.getItem('de-sim')||'[]')).forEach(([k,x])=>{if($(k))$(k).value=x})}catch(e){}
+function calc(){
+ const P=v('nP'),G=v('nG'),R=v('nR'),m=v('m')/100,f=v('fx'),rate=v('rate');
+ $('nPv').textContent=P+' кл.';$('nGv').textContent=G+' кл.';$('nRv').textContent=R+' кл.';$('mv').textContent=v('m')+'%';$('fv').textContent=rub(f);$('rv').textContent=rate+' ₽';
+ const mrr=P*PRICE.P+G*PRICE.G+R*PRICE.R*1.6;$('clients').textContent=(P+G+R)+' клиентов';
+ const op=mrr*m-f;$('mrr').textContent=rub(mrr);$('arr').textContent=rub(mrr*12);$('op').textContent=rub(op);$('op').className=op>=0?'green':'red';
+ const usd=op*12/rate;$('usd').textContent='$'+n(usd);const g=Math.max(0,Math.min(100,usd/300000*100));$('goal').style.width=g+'%';
+ $('goaltxt').textContent=g>=100?'🎯 300k $ в год достигнуто в модели':`До 300k $ в год: ${g.toFixed(0)}% · нужно ещё ≈ ${Math.ceil((300000*rate/12-op)/(PRICE.G*m))} клиентов «Рост»`;
+ const e=v('e'),rp=v('rp')/100,ps=v('ps')/100,mt=v('mt')/100,cl=v('cl')/100,ch=v('ch');
+ ['ev','rpv','psv','mtv','clv','chv'].forEach((id,i)=>$(id).textContent=[n(e),v('rp')+'%',v('ps')+'%',v('mt')+'%',v('cl')+'%',rub(ch)][i]);
+ const st=[['Письма',e],['Ответы',e*rp],['Позитив',e*rp*ps],['Встречи',e*rp*ps*mt],['Оплаты',e*rp*ps*mt*cl]];
+ $('fun').innerHTML=st.map(([t,x])=>`<div><i style="width:${Math.max(4,x/e*100)}%"></i><span>${t}: ${x<10?x.toFixed(1):n(x)}</span></div>`).join('');
+ const paid=st[4][1];$('p100').textContent=(paid/e*100).toFixed(2);$('rev').textContent=rub(paid*ch);
+ const bx=v('bx'),pb=v('pb');$('bxv').textContent=bx;$('pbv').textContent=pb;$('cd').textContent=n(bx*pb);$('cm').textContent=n(bx*pb*21);save();}
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',()=>{calc();try{tg&&tg.HapticFeedback.selectionChanged()}catch(e){}}));calc();
+document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const o={a:b.dataset.a,p:b.dataset.p||''};if(tg&&tg.sendData)tg.sendData(JSON.stringify(o));else alert('Открой из бота Deal Engine')});
+</script></body></html>
