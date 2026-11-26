@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Пальмира</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0b0b0b;--card:#151515;--line:#262626;--ink:#ececec;--mut:#8e8e8e;--blue:#6B8DFF;--yel:#FAF484;--ok:#22c55e;--bad:#ef6b5b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;padding:18px 16px 40px}
+h1{font:700 26px/1.15 -apple-system,"SF Pro Display";margin:0}.sub{color:var(--mut);font-size:13px;margin:4px 0 16px}
+nav{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 14px;padding:0 16px}nav a{flex:none;color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}nav a.on{color:var(--ink);background:var(--card)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}.card h2{font:600 13px/1 inherit;color:var(--mut);margin:0 0 12px}
+.big{font:700 30px/1.1 -apple-system,"SF Pro Display";margin:2px 0}.blue{color:var(--blue)}.yel{color:var(--yel)}.green{color:var(--ok)}.red{color:var(--bad)}
+.f{margin:12px 0}.f label{display:flex;justify-content:space-between;color:var(--mut);font-size:13px}.f b{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;-webkit-appearance:none;height:30px;background:transparent}input[type=range]::-webkit-slider-runnable-track{height:28px;border-radius:14px;background:#1f1f1f}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:1px;border-radius:50%;background:#fff}
+input[type=number]{width:100%;background:#101010;border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:11px;font:inherit}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.kpi div{background:#101010;border:1px solid var(--line);border-radius:14px;padding:12px}.kpi span{color:var(--mut);font-size:12px}.kpi b{display:block;font-size:20px;margin-top:2px}
+.bar{height:12px;background:#1f1f1f;border-radius:6px;overflow:hidden;margin:10px 0 4px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--yel))}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{background:#101010;border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:13px;font:600 14px inherit;text-align:left;cursor:pointer}.btn:active{border-color:var(--blue)}
+.note{color:var(--mut);font-size:12px;margin-top:8px}
+.steps{display:grid;gap:8px}.steps div{display:flex;gap:10px;align-items:center;background:#101010;border:1px solid var(--line);border-radius:14px;padding:10px 12px}.steps em{font-style:normal;color:var(--mut);font-size:12px;margin-left:auto}
+.cal{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.cal div{background:#101010;border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;font-size:12px}.cal b{display:block;font-size:15px}.cal .hot{border-color:var(--yel)}
+</style></head><body>
+<h1>🌴 Пальмира</h1><div class="sub">B2B-карты · таргет · акции месяца · Курган</div>
+<nav id="nav"></nav>
+
+<div class="card"><h2>🎁 Цель декабря: корпоративные карты</h2>
+<div class="big"><span id="have" class="yel"></span> <span style="color:var(--mut);font-size:18px">из 5 млн ₽</span></div>
+<div class="bar"><i id="pg"></i></div><div class="note" id="pgt"></div>
+<div class="f"><label>Оплачено (вводишь сам, хранится в телефоне)</label><input type="number" id="paid" inputmode="numeric" placeholder="например 1250000"></div></div>
+
+<div class="card"><h2>🧮 Калькулятор заказа для компании</h2>
+<div class="f"><label>Сотрудников<b id="sv"></b></label><input type="range" id="s" min="5" max="500" step="5" value="40"></div>
+<div class="f"><label>Номинал карты<b id="nv"></b></label><input type="range" id="nm" min="500" max="10000" step="500" value="3000"></div>
+<div class="f"><label>Скидка (если согласована)<b id="dv"></b></label><input type="range" id="d" min="0" max="15" value="0"></div>
+<div class="kpi"><div><span>Сумма счёта</span><b id="inv" class="blue"></b></div><div><span>Карт</span><b id="cards"></b></div></div>
+<div class="note">Скидку клиенту озвучивай только после согласования — в КП её не обещаем.</div></div>
+
+<div class="card"><h2>🎯 Таргет eLama: окупится ли акция</h2>
+<div class="f"><label>Бюджет<b id="bv"></b></label><input type="range" id="b" min="5000" max="300000" step="5000" value="50000"></div>
+<div class="f"><label>Цена клика (CPC)<b id="cv"></b></label><input type="range" id="cpc" min="5" max="80" value="18"></div>
+<div class="f"><label>Конверсия в покупку по промокоду<b id="crv"></b></label><input type="range" id="cr" min="0.2" max="10" step="0.1" value="2"></div>
+<div class="f"><label>Средний чек<b id="av"></b></label><input type="range" id="av_" min="500" max="8000" step="100" value="2200"></div>
+<div class="f"><label>Валовая маржа (предп.)<b id="gv"></b></label><input type="range" id="gm" min="10" max="60" value="35"></div>
+<div class="kpi"><div><span>Клики → покупки</span><b id="orders"></b></div><div><span>Выручка</span><b id="rev"></b></div>
+<div><span>ROMI по марже</span><b id="romi"></b></div><div><span>Макс. CPC без убытка</span><b id="bep"></b></div></div>
+<div class="note">Промокод на каждую акцию — иначе продажи из рекламы в Далионе не отличить. Маркировка erid обязательна.</div></div>
+
+<div class="card"><h2>🗓 Цикл акций месяца</h2>
+<div class="steps"><div>📥 Пришли план акций боту с подписью «акции»<em>25–30</em></div><div>🎯 Таргетинг eLama + тест 2×2<em>авто</em></div>
+<div>🎨 Креативы и промпты картинок (бренд #6B8DFF/#FAF484)<em>авто</em></div><div>✅ Ты проверяешь пакет → запуск<em>1–3</em></div><div>📊 Отчёт: продажи по промокодам, ROMI<em>конец мес.</em></div></div></div>
+
+<div class="card"><h2>📅 Поводы для B2B-волн</h2><div class="cal" id="cal"></div></div>
+
+<div class="card"><h2>⚡ Действия</h2><div class="btns">
+<button class="btn" data-a="latest" data-p="palmira">📄 Сводка</button><button class="btn" data-a="run" data-p="palmira-daily">▶️ Обновить</button>
+<button class="btn" data-a="run" data-p="palmira-b2b-wave">🎁 Праздничная волна</button><button class="btn" data-a="run" data-p="palmira-signal-wave">📡 Волна по сигналам</button>
+<button class="btn" data-a="run" data-p="palmira-promo">🎨 Пакет акций</button><button class="btn" data-a="pending">⏸ Одобрения</button>
+</div></div>
+<script>
+const tg=window.Telegram?Telegram.WebApp:null;if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0b0b0b');tg.setBackgroundColor('#0b0b0b')}catch(e){}}
+const $=id=>document.getElementById(id),v=id=>+$(id).value,n=x=>Math.round(x).toLocaleString('ru'),rub=x=>Math.abs(x)>=1e6?(x/1e6).toFixed(2)+' млн ₽':n(x)+' ₽';
+const pages=[['index.html','🏠 Пульт'],['de.html','⚙️ Deal Engine'],['palmira.html','🌴 Пальмира'],['life.html','🧭 Life OS']];
+$('nav').innerHTML=pages.map(([h,t])=>`<a href="${h}${location.hash}" class="${location.pathname.endsWith(h)?'on':''}">${t}</a>`).join('');
+const KEY='palmira-app';let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+Object.entries(st).forEach(([k,x])=>{if($(k))$(k).value=x});
+const save=()=>{document.querySelectorAll('input').forEach(i=>st[i.id]=i.value);try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const days=Math.max(0,Math.ceil((new Date(new Date().getFullYear(),11,31)-new Date())/864e5));
+function calc(){
+ const paid=+($('paid').value||0),p=Math.min(100,paid/5e6*100);$('have').textContent=rub(paid);$('pg').style.width=p+'%';
+ $('pgt').textContent=`${p.toFixed(0)}% · осталось ${rub(Math.max(0,5e6-paid))} · дней до НГ: ${days} → нужно ≈ ${rub(Math.max(0,5e6-paid)/Math.max(1,days))} в день`;
+ const s=v('s'),nm=v('nm'),d=v('d');$('sv').textContent=s;$('nv').textContent=n(nm)+' ₽';$('dv').textContent=d+'%';$('inv').textContent=rub(s*nm*(1-d/100));$('cards').textContent=s;
+ const b=v('b'),cpc=v('cpc'),cr=v('cr')/100,av=v('av_'),gm=v('gm')/100;$('bv').textContent=rub(b);$('cv').textContent=cpc+' ₽';$('crv').textContent=v('cr')+'%';$('av').textContent=n(av)+' ₽';$('gv').textContent=v('gm')+'%';
+ const clicks=b/cpc,orders=clicks*cr,rev=orders*av,romi=(rev*gm-b)/b*100;$('orders').textContent=n(clicks)+' → '+n(orders);$('rev').textContent=rub(rev);
+ $('romi').textContent=romi.toFixed(0)+'%';$('romi').className=romi>=0?'green':'red';$('bep').textContent=(cr*av*gm).toFixed(1)+' ₽';save();}
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));calc();
+const H=[['🎄','Новый год','12-31'],['🛡','23 февраля','02-23'],['🌷','8 марта','03-08'],['⛏','День шахтёра','08-30'],['👩‍⚕️','День медика','06-15'],['🏗','День строителя','08-09'],['🎓','День учителя','10-05'],['⚡','День энергетика','12-22']];
+const now=new Date();$('cal').innerHTML=H.map(([e,t,md])=>{let dt=new Date(now.getFullYear()+'-'+md);if(dt<now)dt.setFullYear(dt.getFullYear()+1);const left=Math.ceil((dt-now)/864e5);return `<div class="${left<=45?'hot':''}">${e}<b>${left} дн.</b>${t}</div>`}).join('');
+document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const o={a:b.dataset.a,p:b.dataset.p||''};if(tg&&tg.sendData)tg.sendData(JSON.stringify(o));else alert('Открой из бота Deal Engine')});
+</script></body></html>
