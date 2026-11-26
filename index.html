@@ -28,6 +28,7 @@
   .proj h2 small { font:12px/1 -apple-system, system-ui; color:var(--muted); }
   .chips { display:flex; flex-wrap:wrap; gap:8px; }
   .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:9px 13px; font:500 13.5px/1 inherit; color:inherit; cursor:pointer; }
+  a.chip { text-decoration:none; display:inline-block; }
   .chip:active { border-color:var(--gold); } .chip.gold { background:var(--gold-soft); border-color:#e6d6bb; }
   form { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; display:grid; gap:10px; }
   input, select { width:100%; border:1px solid var(--line); background:#fff; border-radius:12px; padding:11px 12px; font:inherit; color:inherit; }
@@ -85,6 +86,11 @@
     const opts = projects.map(p => `<option value="${p.slug}">${esc(p.name)}</option>`).join('') + '<option value="flight-supply">Flight Supply</option><option value="other">Другое</option>';
     app.innerHTML = `
       <h1>Deal Engine</h1><div class="sub"><span class="dot"></span>Кнопка → бот выполняет → ответ в чате</div>
+      <div class="chips" style="margin-bottom:12px">
+        <a class="chip" href="de.html${location.hash}">⚙️ Симулятор Deal Engine</a>
+        <a class="chip" href="palmira.html${location.hash}">🌴 Пальмира</a>
+        <a class="chip gold" href="life.html${location.hash}">🧭 Life OS</a>
+      </div>
       <div class="tabs"><button data-tab="today" class="on">Сегодня</button><button data-tab="proj">Проекты</button><button data-tab="mail">Рассылки</button><button data-tab="money">Деньги</button></div>
 
       <section class="pane on" id="today">
