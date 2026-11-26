@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Пульт Deal Engine</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --bg:#f6f3ee; --card:#fffdf9; --ink:#1f1d1a; --muted:#8a8378; --line:#e8e2d8; --gold:#b08d57; --gold-soft:#f3ebdd; --ok:#4f7a5a; --bad:#a5524a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; padding:18px 16px 40px; }
+  h1 { font:500 24px/1.15 "New York", "Iowan Old Style", Georgia, serif; margin:2px 0 2px; letter-spacing:-.2px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--gold); margin-right:6px; vertical-align:middle; }
+  .tabs { display:flex; gap:6px; background:var(--gold-soft); border-radius:14px; padding:4px; position:sticky; top:0; z-index:5; margin:0 -2px 6px; }
+  .tabs button { flex:1; border:0; background:transparent; padding:9px 4px; border-radius:11px; font:600 13px/1 inherit; color:var(--muted); cursor:pointer; }
+  .tabs button.on { background:var(--card); color:var(--ink); box-shadow:0 0 0 1px var(--line); }
+  .pane { display:none; } .pane.on { display:block; }
+  .label { color:var(--muted); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; margin:18px 4px 8px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  button.tile { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:13px 14px; text-align:left; font:inherit; color:inherit; cursor:pointer; transition:transform .08s, border-color .2s; min-height:72px; }
+  button.tile:active { transform:scale(.98); border-color:var(--gold); }
+  .tile .e { font-size:19px; display:block; margin-bottom:5px; } .tile .t { font-weight:600; font-size:14.5px; } .tile .d { color:var(--muted); font-size:12px; display:block; }
+  .ok { border-color:#cfe0d3 !important; } .bad { border-color:#ecd2ce !important; }
+  .proj { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin-bottom:12px; }
+  .proj h2 { font:500 18px/1.2 "New York", Georgia, serif; margin:0 0 10px; display:flex; justify-content:space-between; align-items:center; }
+  .proj h2 small { font:12px/1 -apple-system, system-ui; color:var(--muted); }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:9px 13px; font:500 13.5px/1 inherit; color:inherit; cursor:pointer; }
+  .chip:active { border-color:var(--gold); } .chip.gold { background:var(--gold-soft); border-color:#e6d6bb; }
+  form { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; display:grid; gap:10px; }
+  input, select { width:100%; border:1px solid var(--line); background:#fff; border-radius:12px; padding:11px 12px; font:inherit; color:inherit; }
+  .two { display:grid; grid-template-columns:2fr 1fr; gap:10px; }
+  .seg { display:flex; background:var(--gold-soft); border-radius:12px; padding:3px; }
+  .seg label { flex:1; text-align:center; font-size:14px; cursor:pointer; } .seg input { display:none; }
+  .seg span { display:block; padding:8px; border-radius:9px; } .seg input:checked + span { background:var(--card); box-shadow:0 0 0 1px var(--line); }
+  .primary { background:var(--ink); color:#fff; border:0; border-radius:12px; padding:13px; font:600 15px/1 inherit; cursor:pointer; }
+  .err { color:var(--bad); font-size:13px; min-height:16px; }
+  .foot { color:var(--muted); font-size:12px; text-align:center; margin-top:22px; }
+  .hint { color:var(--muted); font-size:12.5px; margin:2px 4px 0; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#171513; --card:#211e1b; --ink:#f1ece4; --muted:#9b9388; --line:#35302a; --gold-soft:#2b251d; } input, select, .chip { background:#1b1916; } .primary { background:#f1ece4; color:#171513; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+  const tg = window.Telegram ? Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); try { const dark = tg.colorScheme === 'dark'; tg.setHeaderColor(dark ? '#171513' : '#f6f3ee'); tg.setBackgroundColor(dark ? '#171513' : '#f6f3ee'); } catch (e) {} }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const clean = s => String(s || '').replace(/[^a-z0-9-]/g, '');
+  function send(obj) {
+    if (tg && tg.sendData) { try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {} tg.sendData(JSON.stringify(obj)); }
+    else { alert('Открой пульт из бота Deal Engine: кнопка «Пульт» слева от поля ввода.'); }
+  }
+  const qs = new URLSearchParams(location.search);
+  const app = document.getElementById('app');
+
+  // ── Клиентский режим: ?client=1&p=<проект> — только свой отчёт и свои волны (права проверяет бот)
+  if (qs.get('client') === '1') {
+    const p = clean(qs.get('p'));
+    app.innerHTML = `
+      <h1>Пульт продаж</h1><div class="sub"><span class="dot"></span>Письма уходят только после вашего одобрения</div>
+      <div class="label">Отчёт</div>
+      <div class="grid"><button class="tile" data-a="latest" data-p="${p}"><span class="e">📊</span><span class="t">Последний отчёт</span><span class="d">ответы и метрики</span></button></div>
+      <div class="label">Волна на одобрении</div>
+      <div class="row">
+        <button class="tile ok" data-a="approve" data-p="${p}-wave"><span class="e">✅</span><span class="t">Одобрить</span><span class="d">письма уйдут по графику</span></button>
+        <button class="tile bad" data-a="reject" data-p="${p}-wave"><span class="e">❌</span><span class="t">Отклонить</span><span class="d">напишите правки в чат</span></button>
+      </div>
+      <div class="foot">Deal Engine</div>`;
+  } else {
+    // ── Режим владельца: проекты приходят из бота (?p=slug~Имя~флаги|…), флаги: d сводка, w волна, s сигналы, b праздничная волна
+    const projects = (qs.get('p') || 'palmira~Пальмира~db|mgt~МГТ~dw').split('|').map(x => x.split('~')).filter(x => x[0])
+      .map(([slug, name, flags]) => ({ slug: clean(slug), name: name || slug, flags: flags || '' }));
+    const icon = { palmira: '🌴', mgt: '⚗️', 'deal-engine': '⚙️', 'flight-supply': '✈️' };
+    const projHtml = projects.map(p => {
+      const chips = [`<button class="chip gold" data-a="latest" data-p="${p.slug}">📄 Сводка</button>`];
+      if (p.flags.includes('d')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-daily">▶️ Обновить</button>`);
+      if (p.flags.includes('w')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-wave">✉️ Волна</button>`);
+      if (p.flags.includes('s')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-signal-wave">📡 Волна по сигналам</button>`);
+      if (p.flags.includes('b')) chips.push(`<button class="chip" data-a="run" data-p="${p.slug}-b2b-wave">🎁 Праздничная волна</button>`);
+      return `<div class="proj"><h2>${icon[p.slug] || '◼︎'} ${esc(p.name)} <small>${esc(p.slug)}</small></h2><div class="chips">${chips.join('')}</div></div>`;
+    }).join('');
+    const opts = projects.map(p => `<option value="${p.slug}">${esc(p.name)}</option>`).join('') + '<option value="flight-supply">Flight Supply</option><option value="other">Другое</option>';
+    app.innerHTML = `
+      <h1>Deal Engine</h1><div class="sub"><span class="dot"></span>Кнопка → бот выполняет → ответ в чате</div>
+      <div class="tabs"><button data-tab="today" class="on">Сегодня</button><button data-tab="proj">Проекты</button><button data-tab="mail">Рассылки</button><button data-tab="money">Деньги</button></div>
+
+      <section class="pane on" id="today">
+        <div class="label">Главное</div>
+        <div class="grid">
+          <button class="tile ok" data-a="pending"><span class="e">⏸</span><span class="t">Ждут одобрения</span><span class="d">волны и кейсы с кнопками</span></button>
+          <button class="tile" data-a="coldy" data-p="replies"><span class="e">📥</span><span class="t">Новые ответы</span><span class="d">из Coldy, по проектам</span></button>
+          <button class="tile" data-a="status"><span class="e">🩺</span><span class="t">Статус</span><span class="d">агенты и расписание</span></button>
+          <button class="tile" data-a="journal"><span class="e">📊</span><span class="t">Неделя</span><span class="d">журнал запусков</span></button>
+        </div>
+        <div class="label">Запустить сейчас</div>
+        <div class="grid">
+          <button class="tile" data-a="run" data-p="signal-radar"><span class="e">📡</span><span class="t">Радар поводов</span><span class="d">все проекты · 5–15 мин</span></button>
+          <button class="tile" data-a="run" data-p="coldy-watch"><span class="e">🗂</span><span class="t">Разбор ответов</span><span class="d">корзины + черновики</span></button>
+        </div>
+      </section>
+
+      <section class="pane" id="proj">
+        <div class="label">Проекты · ${projects.length}</div>
+        ${projHtml}
+        <div class="label">Новый клиент за 15 минут</div>
+        <form id="onb">
+          <input id="oname" placeholder="Название клиента" autocomplete="off">
+          <input id="oslug" placeholder="Код: латиница, например acme-steel" autocomplete="off" autocapitalize="off">
+          <div class="err" id="oerr"></div>
+          <button class="primary" type="submit">Создать проект и анкету</button>
+        </form>
+        <div class="hint">Дальше: ответы на 10 вопросов → бриф → твоё ✅ → первая волна.</div>
+      </section>
+
+      <section class="pane" id="mail">
+        <div class="label">Coldy · 14 ящиков</div>
+        <div class="grid">
+          <button class="tile" data-a="coldy" data-p="check"><span class="e">📮</span><span class="t">Ящики и домены</span><span class="d">кто за каким проектом</span></button>
+          <button class="tile" data-a="coldy" data-p="stats"><span class="e">🛡</span><span class="t">Доставляемость</span><span class="d">bounce, автопауза</span></button>
+        </div>
+        <div class="hint">Отправка и запуск рассылок — только после ✅ в чате.</div>
+      </section>
+
+      <section class="pane" id="money">
+        <div class="label">Оплаты на 100 писем</div>
+        <div class="grid">
+          <button class="tile" data-a="run" data-p="revenue-weekly"><span class="e">💸</span><span class="t">Пересчитать</span><span class="d">проекты · версии · сегменты</span></button>
+          <button class="tile" data-a="run" data-p="case-weekly"><span class="e">🏆</span><span class="t">Кейс недели</span><span class="d">черновик на ✅</span></button>
+        </div>
+        <div class="label">Записать доход · путь к 300k $</div>
+        <form id="inc">
+          <div class="two"><input id="amount" inputmode="decimal" placeholder="Сумма" autocomplete="off">
+            <select id="cur"><option>RUB</option><option>USD</option><option>AED</option><option>EUR</option></select></div>
+          <select id="project">${opts}</select>
+          <input id="source" placeholder="Email или домен клиента — для «денег на 100 писем»" autocomplete="off">
+          <div class="seg"><label><input type="radio" name="st" value="paid" checked><span>Оплачено</span></label><label><input type="radio" name="st" value="expected"><span>Ожидается</span></label></div>
+          <div class="err" id="err"></div>
+          <button class="primary" type="submit">Записать</button>
+        </form>
+      </section>
+      <div class="foot">Deal Engine · пульт v3</div>`;
+
+    document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+      document.querySelectorAll('.pane').forEach(x => x.classList.toggle('on', x.id === b.dataset.tab));
+      try { tg && tg.HapticFeedback.selectionChanged(); } catch (e) {}
+    }));
+    const err = document.getElementById('err');
+    ['amount', 'source'].forEach(id => document.getElementById(id).addEventListener('input', () => err.textContent = ''));
+    document.getElementById('inc').addEventListener('submit', e => {
+      e.preventDefault();
+      const amount = document.getElementById('amount').value.replace(/\s/g, '').replace(',', '.');
+      const source = document.getElementById('source').value.trim();
+      if (!/^\d+(\.\d{1,2})?$/.test(amount) || Number(amount) <= 0) { err.textContent = 'Введи сумму числом, например 45000'; return; }
+      if (!source) { err.textContent = 'Напиши email или домен клиента'; return; }
+      send({ a: 'income', amount, cur: document.getElementById('cur').value, project: document.getElementById('project').value,
+             source: source.slice(0, 80), status: document.querySelector('input[name=st]:checked').value });
+    });
+    const oerr = document.getElementById('oerr');
+    document.getElementById('onb').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('oname').value.trim();
+      const slug = document.getElementById('oslug').value.trim().toLowerCase();
+      if (!name) { oerr.textContent = 'Напиши название клиента'; return; }
+      if (!/^[a-z0-9][a-z0-9-]{1,30}$/.test(slug)) { oerr.textContent = 'Код: латиница, цифры и дефис'; return; }
+      send({ a: 'onboard', slug, name });
+    });
+  }
+  document.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => send({ a: b.dataset.a, p: b.dataset.p || '' })));
+</script>
+</body>
+</html>
