@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Life OS</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0b0b0b;--card:#151515;--line:#262626;--ink:#ececec;--mut:#8e8e8e;--gold:#c9a86a;--ok:#22c55e;--bad:#ef6b5b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,"SF Pro Text",Inter,system-ui,sans-serif;padding:18px 16px 40px}
+h1{font:700 26px/1.15 -apple-system,"SF Pro Display";margin:0}.sub{color:var(--mut);font-size:13px;margin:4px 0 16px}
+nav{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 14px;padding:0 16px}nav a{flex:none;color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}nav a.on{color:var(--ink);background:var(--card)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}.card h2{font:600 13px/1 inherit;color:var(--mut);margin:0 0 12px}
+.big{font:700 30px/1.1 -apple-system,"SF Pro Display";margin:2px 0}.gold{color:var(--gold)}.green{color:var(--ok)}.red{color:var(--bad)}
+.f{margin:12px 0}.f label{display:flex;justify-content:space-between;color:var(--mut);font-size:13px}.f b{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;-webkit-appearance:none;height:30px;background:transparent}input[type=range]::-webkit-slider-runnable-track{height:28px;border-radius:14px;background:#1f1f1f}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:1px;border-radius:50%;background:#fff}
+input[type=text]{width:100%;background:#101010;border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:11px;font:inherit}
+.emo{display:flex;justify-content:space-between;gap:6px}.emo button{flex:1;font-size:24px;background:#101010;border:1px solid var(--line);border-radius:14px;padding:8px 0;cursor:pointer}.emo button.on{border-color:var(--gold);background:#1d1a14}
+.tg{display:flex;flex-wrap:wrap;gap:8px}.tg button{background:#101010;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:9px 13px;font:500 13.5px inherit;cursor:pointer}.tg button.on{border-color:var(--ok);background:#0f1a12}
+.primary{width:100%;background:#ececec;color:#0b0b0b;border:0;border-radius:14px;padding:14px;font:700 15px inherit;margin-top:12px;cursor:pointer}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.kpi div{background:#101010;border:1px solid var(--line);border-radius:14px;padding:12px}.kpi span{color:var(--mut);font-size:12px}.kpi b{display:block;font-size:20px;margin-top:2px}
+.tips div{background:#101010;border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin:8px 0;font-size:14px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;font-size:11px;color:var(--mut)}.week i{display:block;height:64px;background:#1f1f1f;border-radius:8px;position:relative;overflow:hidden;margin-bottom:4px}.week i b{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,var(--gold),#e7d3a5)}
+.donut{display:flex;gap:16px;align-items:center}.legend div{font-size:13px;margin:3px 0}.legend s{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;text-decoration:none}
+.note{color:var(--mut);font-size:12px;margin-top:8px}
+</style></head><body>
+<h1>🧭 Life OS</h1><div class="sub">Личное: энергия, фокус, путь к 300k $ — данные хранятся в телефоне</div>
+<nav id="nav"></nav>
+
+<div class="card"><h2>☀️ Чек-ин дня · 30 секунд</h2>
+<div class="emo" id="mood"><button data-v="1">😫</button><button data-v="2">😕</button><button data-v="3">😐</button><button data-v="4">🙂</button><button data-v="5">🔥</button></div>
+<div class="f"><label>Сон<b id="slv"></b></label><input type="range" id="sl" min="3" max="11" step="0.5" value="7.5"></div>
+<div class="f"><label>Глубокая работа<b id="dwv"></b></label><input type="range" id="dw" min="0" max="10" step="0.5" value="4"></div>
+<div class="tg" id="hab"><button data-h="sport">🏋️ Спорт</button><button data-h="walk">🚶 10к шагов</button><button data-h="read">📚 Чтение</button><button data-h="nophone">📵 Без ленты</button><button data-h="people">🤝 Живое общение</button><button data-h="money">💸 Ход к деньгам</button></div>
+<div class="f"><input type="text" id="win" placeholder="Главная победа дня одной фразой"></div>
+<button class="primary" id="saveDay">Сохранить день</button>
+<div class="note" id="saved"></div></div>
+
+<div class="card"><h2>📈 Неделя</h2><div class="week" id="week"></div>
+<div class="kpi"><div><span>Средний сон</span><b id="avgSl"></b></div><div><span>Глубокая работа</span><b id="sumDw"></b></div></div></div>
+
+<div class="card"><h2>💡 Рекомендации на завтра</h2><div class="tips" id="tips"></div></div>
+
+<div class="card"><h2>🎯 Путь к 300 000 $ в год</h2>
+<div class="f"><label>Доход сейчас, $ в месяц<b id="incv"></b></label><input type="range" id="inc" min="0" max="30000" step="250" value="2000"></div>
+<div class="f"><label>Рост в месяц<b id="grv"></b></label><input type="range" id="gr" min="1" max="30" value="10"></div>
+<div class="kpi"><div><span>Нужно в месяц</span><b>$25 000</b></div><div><span>Дойдёшь через</span><b id="eta" class="gold"></b></div></div>
+<svg id="chart" viewBox="0 0 320 120" style="width:100%;margin-top:12px"></svg>
+<div class="note">Модель: сложный рост без потолка — проверяй раз в месяц по факту из income.csv.</div></div>
+
+<div class="card"><h2>⏳ Бюджет суток</h2>
+<div class="donut"><svg id="donut" viewBox="0 0 42 42" width="120" height="120"></svg><div class="legend" id="leg"></div></div>
+<div class="f"><label>Сон<b id="t1v"></b></label><input type="range" id="t1" min="5" max="10" step="0.5" value="7.5"></div>
+<div class="f"><label>Глубокая работа<b id="t2v"></b></label><input type="range" id="t2" min="0" max="10" step="0.5" value="4"></div>
+<div class="f"><label>Операционка и встречи<b id="t3v"></b></label><input type="range" id="t3" min="0" max="10" step="0.5" value="4"></div>
+<div class="f"><label>Спорт и тело<b id="t4v"></b></label><input type="range" id="t4" min="0" max="4" step="0.5" value="1"></div>
+<div class="f"><label>Люди и семья<b id="t5v"></b></label><input type="range" id="t5" min="0" max="6" step="0.5" value="2"></div>
+<div class="note" id="free"></div></div>
+
+<div class="card"><h2>🧪 Идеи на месяц</h2><div class="tips" id="ideas"></div></div>
+<script>
+const tg=window.Telegram?Telegram.WebApp:null;if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0b0b0b');tg.setBackgroundColor('#0b0b0b')}catch(e){}}
+const $=id=>document.getElementById(id),v=id=>+$(id).value;
+const pages=[['index.html','🏠 Пульт'],['de.html','⚙️ Deal Engine'],['palmira.html','🌴 Пальмира'],['life.html','🧭 Life OS']];
+$('nav').innerHTML=pages.map(([h,t])=>`<a href="${h}${location.hash}" class="${location.pathname.endsWith(h)?'on':''}">${t}</a>`).join('');
+const K='lifeos';let db={days:{},set:{}};try{db=Object.assign(db,JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){}
+const store=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(e){}};
+const today=new Date().toISOString().slice(0,10);let day=db.days[today]||{mood:0,habits:[]};
+['sl','dw','inc','gr','t1','t2','t3','t4','t5'].forEach(k=>{if(db.set[k])$(k).value=db.set[k]});if(day.sl)$('sl').value=day.sl;if(day.dw)$('dw').value=day.dw;if(day.win)$('win').value=day.win;
+document.querySelectorAll('#mood button').forEach(b=>{b.classList.toggle('on',+b.dataset.v===day.mood);b.onclick=()=>{day.mood=+b.dataset.v;document.querySelectorAll('#mood button').forEach(x=>x.classList.toggle('on',x===b));hap()}});
+document.querySelectorAll('#hab button').forEach(b=>{b.classList.toggle('on',day.habits.includes(b.dataset.h));b.onclick=()=>{const h=b.dataset.h;day.habits=day.habits.includes(h)?day.habits.filter(x=>x!==h):[...day.habits,h];b.classList.toggle('on');hap()}});
+function hap(){try{tg&&tg.HapticFeedback.selectionChanged()}catch(e){}}
+$('saveDay').onclick=()=>{day.sl=v('sl');day.dw=v('dw');day.win=$('win').value.trim().slice(0,140);db.days[today]=day;store();render();
+ $('saved').textContent='✅ Сохранено. '+(tg&&tg.sendData?'Отправлено в журнал бота.':'');
+ if(tg&&tg.sendData)tg.sendData(JSON.stringify({a:'life',d:today,mood:day.mood,sl:day.sl,dw:day.dw,h:day.habits.join(','),win:day.win}))};
+function last7(){const out=[];for(let i=6;i>=0;i--){const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);out.push([d,db.days[d]])}return out}
+function render(){
+ $('slv').textContent=v('sl')+' ч';$('dwv').textContent=v('dw')+' ч';
+ const w=last7(),names=['вс','пн','вт','ср','чт','пт','сб'];
+ $('week').innerHTML=w.map(([d,x])=>`<div><i><b style="height:${x?Math.min(100,(x.dw||0)/8*100):0}%"></b></i>${names[new Date(d).getDay()]}<br>${x&&x.mood?['','😫','😕','😐','🙂','🔥'][x.mood]:'·'}</div>`).join('');
+ const f=w.filter(([,x])=>x);const avg=f.length?f.reduce((s,[,x])=>s+(x.sl||0),0)/f.length:0;$('avgSl').textContent=f.length?avg.toFixed(1)+' ч':'—';$('sumDw').textContent=f.reduce((s,[,x])=>s+(x.dw||0),0)+' ч';
+ const tips=[];const sport=f.filter(([,x])=>x.habits.includes('sport')).length,money=f.filter(([,x])=>x.habits.includes('money')).length,feed=f.filter(([,x])=>x.habits.includes('nophone')).length;
+ if(f.length&&avg<7)tips.push('😴 Сон в среднем '+avg.toFixed(1)+' ч — сдвинь отбой на 30 минут раньше, это дешевле любой продуктивности.');
+ if(day.dw<3)tips.push('🎯 Завтра блок глубокой работы 12:00–14:00 (твоё лучшее время): одна задача Deal Engine, телефон в другой комнате.');
+ if(money<3)tips.push('💸 Ходов к деньгам '+money+' из 7 дней — первая задача утром: одобрить волну или написать 1 тёплому лиду.');
+ if(sport<3)tips.push('🏋️ Спорт '+sport+' раз за неделю — поставь 3 тренировки в календарь как встречи.');
+ if(feed<3)tips.push('📵 Лента съедает фокус — включи «Фокус» на Mac/iPhone с 12 до 16.');
+ if(!tips.length)tips.push('🔥 Неделя ровная — держи ритм и добавь одну новую привычку на 14 дней.');
+ $('tips').innerHTML=tips.slice(0,4).map(t=>`<div>${t}</div>`).join('');
+ const inc=v('inc'),gr=v('gr')/100;$('incv').textContent='$'+inc.toLocaleString('ru');$('grv').textContent=v('gr')+'%';
+ let m=0,x=Math.max(inc,1);const pts=[];while(x<25000&&m<120){pts.push(x);x*=1+gr;m++}pts.push(Math.min(x,25000));
+ $('eta').textContent=inc>=25000?'уже 🎯':m>=120?'> 10 лет':(m<12?m+' мес':(m/12).toFixed(1)+' года');
+ const W=320,Hh=110,mx=25000;$('chart').innerHTML=`<line x1="0" y1="${Hh-Hh*25000/mx}" x2="${W}" y2="${Hh-Hh*25000/mx}" stroke="#c9a86a" stroke-dasharray="4 4" stroke-width="1"/>`+
+  `<polyline fill="none" stroke="#22c55e" stroke-width="2.5" points="${pts.map((p,i)=>`${i/(pts.length-1||1)*W},${Hh-Math.min(p,mx)/mx*Hh+4}`).join(' ')}"/>`;
+ const T=[['Сон','t1','#6B8DFF'],['Фокус','t2','#22c55e'],['Операционка','t3','#8e8e8e'],['Спорт','t4','#c9a86a'],['Люди','t5','#e879a6']];let used=0,off=25,arcs='';
+ T.forEach(([n,k,c])=>{const h=v(k);$(k+'v').textContent=h+' ч';const pct=h/24*100;arcs+=`<circle cx="21" cy="21" r="15.9" fill="none" stroke="${c}" stroke-width="6" stroke-dasharray="${pct} ${100-pct}" stroke-dashoffset="${off}"/>`;off-=pct;used+=h});
+ $('donut').innerHTML=`<circle cx="21" cy="21" r="15.9" fill="none" stroke="#1f1f1f" stroke-width="6"/>`+arcs;
+ $('leg').innerHTML=T.map(([n,k,c])=>`<div><s style="background:${c}"></s>${n} · ${v(k)} ч</div>`).join('')+`<div>⏳ Свободно · ${(24-used).toFixed(1)} ч</div>`;
+ $('free').textContent=24-used<0?'🔴 Больше 24 часов — что-то придётся отдать.':24-used<2?'🟡 Почти без запаса — первым страдает сон.':'🟢 Есть запас '+(24-used).toFixed(1)+' ч — отдай час на прогулку или людей.';
+ ['sl','dw','inc','gr','t1','t2','t3','t4','t5'].forEach(k=>db.set[k]=$(k).value);store();}
+document.querySelectorAll('input[type=range]').forEach(i=>i.addEventListener('input',render));render();
+const IDEAS=['🧊 Неделя без сахара и алкоголя — замерь фокус в чек-ине','📓 Вечером 3 строки: что сработало, что нет, главный ход завтра','🗣 Раз в неделю созвон с предпринимателем сильнее тебя','🏃 Утренняя прогулка 20 мин без телефона перед работой','💼 Пятница 16:00 — обзор недели: деньги, клиенты, здоровье','🎯 Одна цель на месяц: 3 платящих клиента Deal Engine'];
+$('ideas').innerHTML=IDEAS.sort(()=>Math.random()-.5).slice(0,3).map(t=>`<div>${t}</div>`).join('');
+</script></body></html>
